@@ -5,6 +5,24 @@
 #include"wrapper/checkError.h"
 #include"application/application.h"
 
+GLuint vao, program;
+
+void prepareInterleavedBuffer() {
+	float vertices[] = {
+		-0.5f, -0.5f, 0.0f,
+		 0.5f, -0.5f, 0.0f,
+		 0.0f,  0.5f, 0.0f
+	};
+	GLuint vbo;
+	glGenVertexArrays(1, &vao);
+	glGenBuffers(1, &vbo);
+	glBindVertexArray(vao);
+	glBindBuffer(GL_ARRAY_BUFFER, vbo);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+	glEnableVertexAttribArray(0);
+}
+
 void prepareShader() {
 	const char* vertexShaderSource = "#version 460 core\n"
 		"layout (location = 0) in vec3 aPos;\n"
@@ -42,20 +60,46 @@ void prepareShader() {
 		glGetShaderInfoLog(fragment, 1024, NULL, infoLog);
 		std::cout << "ERROR::SHADER::VERTEX::COMPILATION_FAILED  --FRAGMENT\n" << infoLog << std::endl;
 	}
+
+	program = glCreateProgram();
+
+	glAttachShader(program, vertex);
+	glAttachShader(program, fragment);
+
+	glLinkProgram(program);
+	glGetProgramiv(program, GL_LINK_STATUS, &success);
+	if (!success) {
+		glGetProgramInfoLog(program, 1024, NULL, infoLog);
+		std::cout << "ERROR::SHADER::PROGRAM::LINKING_FAILED\n" << infoLog << std::endl;
+	}
+
+	glDeleteShader(vertex);
+	glDeleteShader(fragment);
+}
+
+void render() {
+	GL_CALL(glClear(GL_COLOR_BUFFER_BIT));
+
+	glUseProgram(program);
+
+	glBindVertexArray(vao);
+
+	glDrawArrays(GL_TRIANGLES, 0, 3);
 }
 
 int main(void) {
 	std::cout << "Hello, World!" << std::endl;
 
-	app->init(1000, 800);
+	app->init(800, 600);
 
+	prepareInterleavedBuffer();
 	prepareShader();
 
 	glViewport(0, 0, app->getWindowWidth(), app->getWindowHeight());
 	glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 
 	while (app->update()) {
-		GL_CALL(glClear(GL_COLOR_BUFFER_BIT));
+		render();
 	}
 
 	app->destroy();
