@@ -12,6 +12,8 @@ public:
 
 	void end();
 
+	void setFloat(const std::string& name, float value) const;
+
 private:
 	void checkCompileErrors(GLuint target, std::string type);
 

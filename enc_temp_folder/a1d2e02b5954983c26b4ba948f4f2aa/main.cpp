@@ -91,6 +91,8 @@ void render() {
 }
 
 int main(void) {
+	std::cout << "Hello, World!" << std::endl;
+
 	app->init(800, 600);
 
 	prepareVAO();

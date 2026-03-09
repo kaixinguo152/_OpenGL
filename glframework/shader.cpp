@@ -103,3 +103,9 @@ void Shader::checkCompileErrors(GLuint target, std::string type) {
 		std::cout << "Error: Check shader errors Type is wrong" << std::endl;
 	}
 };
+
+void Shader::setFloat(const std::string& name, float value) const {
+	GLint location = GL_CALL(glGetUniformLocation(mProgram, name.c_str()));
+
+	GL_CALL(glUniform1f(location, value));
+};
