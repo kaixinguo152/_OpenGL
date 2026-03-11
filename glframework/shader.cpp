@@ -109,3 +109,8 @@ void Shader::setFloat(const std::string& name, float value) const {
 
 	GL_CALL(glUniform1f(location, value));
 };
+
+void Shader::setInt(const std::string& name, int value) const {
+	GLint location = GL_CALL(glGetUniformLocation(mProgram, name.c_str()));
+	GL_CALL(glUniform1i(location, value));
+};

@@ -1,12 +1,19 @@
+#pragma comment(linker, "/subsystem:\"windows\" /entry:\"mainCRTStartup\"")
 #include<iostream>
 #include"glframework/core.h"
 #include"glframework/shader.h"
 #include<assert.h>
 #include"wrapper/checkError.h"
 #include"application/application.h"
+#include"glframework/texture.h"
 
-GLuint vao;
+GLuint vao_triangle, vao_square;
 Shader* shader = nullptr;
+Texture* texture = nullptr;
+
+Texture* grassTexture = nullptr;
+Texture* landTexture = nullptr;
+Texture* noiseTexture = nullptr;
 
 void prepareInterleavedBuffer() {
 	float vertices[] = {
@@ -15,9 +22,9 @@ void prepareInterleavedBuffer() {
 		 0.0f,  0.5f, 0.0f
 	};
 	GLuint vbo;
-	glGenVertexArrays(1, &vao);
+	glGenVertexArrays(1, &vao_triangle);
 	glGenBuffers(1, &vbo);
-	glBindVertexArray(vao);
+	glBindVertexArray(vao_triangle);
 	glBindBuffer(GL_ARRAY_BUFFER, vbo);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
@@ -41,7 +48,13 @@ void prepareVAO() {
 		0, 1, 2
 	};
 
-	GLuint posVbo, colorVbo;
+	float uvs[] = {
+		0.0f, 0.0f,
+		1.0f, 0.0f,
+		0.5f, 1.0f
+	};
+
+	GLuint posVbo, colorVbo, uvVbo;
 	glGenBuffers(1, &posVbo);
 	glBindBuffer(GL_ARRAY_BUFFER, posVbo);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(positions), positions, GL_STATIC_DRAW);
@@ -50,19 +63,77 @@ void prepareVAO() {
 	glBindBuffer(GL_ARRAY_BUFFER, colorVbo);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(colors), colors, GL_STATIC_DRAW);
 
+	glGenBuffers(1, &uvVbo);
+	glBindBuffer(GL_ARRAY_BUFFER, uvVbo);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(uvs), uvs, GL_STATIC_DRAW);
+
 	GLuint ebo;
 	glGenBuffers(1, &ebo);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 
-	glGenVertexArrays(1, &vao);
-	glBindVertexArray(vao);
+	glGenVertexArrays(1, &vao_triangle);
+	glBindVertexArray(vao_triangle);
 
 	glBindBuffer(GL_ARRAY_BUFFER, posVbo);
 	glEnableVertexAttribArray(0);
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
 
 	glBindBuffer(GL_ARRAY_BUFFER, colorVbo);
+	glEnableVertexAttribArray(1);
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+
+	glBindBuffer(GL_ARRAY_BUFFER, uvVbo);
+	glEnableVertexAttribArray(2);
+	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)0);
+
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
+
+	glBindVertexArray(0);
+}
+
+void prepareVao_square() {
+	float positions[] = {
+		 -0.5f, -0.5f, 0.0f,
+		 0.5f,  -0.5f, 0.0f,
+		 -0.5f, 0.5f, 0.0f,
+		 0.5f,  0.5f, 0.0f
+	};
+
+	unsigned int indices[] = {
+		0, 1, 2,
+		1, 3, 2
+	};
+
+	float uvs[] = {
+		 0.5f, 0.0f, 0.0f,
+		 1.0f, 0.0f, 0.0f,
+		 0.5f,  1.0f, 0.0f,
+		 1.0f,  1.0f, 0.0f
+	};
+
+	GLuint posVbo, uvVbo;
+	glGenBuffers(1, &posVbo);
+	glBindBuffer(GL_ARRAY_BUFFER, posVbo);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(positions), positions, GL_STATIC_DRAW);
+
+	glGenBuffers(1, &uvVbo);
+	glBindBuffer(GL_ARRAY_BUFFER, uvVbo);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(uvs), uvs, GL_STATIC_DRAW);
+
+	GLuint ebo;
+	glGenBuffers(1, &ebo);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+
+	glGenVertexArrays(1, &vao_square);
+	glBindVertexArray(vao_square);
+
+	glBindBuffer(GL_ARRAY_BUFFER, posVbo);
+	glEnableVertexAttribArray(0);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+
+	glBindBuffer(GL_ARRAY_BUFFER, uvVbo);
 	glEnableVertexAttribArray(1);
 	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
 
@@ -75,34 +146,64 @@ void prepareShader() {
 	shader = new Shader("assets/shaders/vertex.glsl", "assets/shaders/fragment.glsl");
 }
 
+void prepareShader_square() {
+	shader = new Shader("assets/shaders/vertex_square.glsl", "assets/shaders/fragment_square.glsl");
+};
+
+void prepareTexture() {
+	texture = new Texture("./assets/textures/texture.jpeg", 0);
+}
+
+void prepareTexture_square() {
+	grassTexture = new Texture("./assets/textures/grass.jpeg", 0);
+	landTexture = new Texture("./assets/textures/land.jpeg", 1);
+	noiseTexture = new Texture("./assets/textures/noise.png", 2);
+}
+
 void render() {
 	GL_CALL(glClear(GL_COLOR_BUFFER_BIT));
 
 	shader->begin();
 
-	glBindVertexArray(vao);
-
-	glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_INT, 0);
-
-	//glBindVertexArray(0);
 	shader->setFloat("time", glfwGetTime());
+	//shader->setInt("grassSampler", 0);
+	//shader->setInt("landSampler", 1);
+	//shader->setInt("noiseSampler", 2);
+
+	shader->setInt("Sampler", 0);
+	shader->setFloat("width",texture->getWidth());
+	shader->setFloat("height", texture->getHeight());
+
+	glBindVertexArray(vao_triangle);
+	glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_INT, 0);
+	glBindVertexArray(0);
+
+	//glBindVertexArray(vao_square);
+	//glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+	//glBindVertexArray(0);
 
 	shader->end();
 }
 
 int main(void) {
-	app->init(800, 600);
+	app->init(750, 750);
+
+	//prepareVao_square();
+	//prepareShader_square();
+	//prepareTexture_square();
 
 	prepareVAO();
 	prepareShader();
+	prepareTexture();
 
 	glViewport(0, 0, app->getWindowWidth(), app->getWindowHeight());
-	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+	glClearColor(0.5f, 0.5f, 0.5f, 1.0f);
 
 	while (app->update()) {
 		render();
 	}
 
+	delete texture;
 	app->destroy();
 	return 0;
 }
