@@ -10,10 +10,38 @@
 GLuint vao_triangle, vao_square;
 Shader* shader = nullptr;
 Texture* texture = nullptr;
+glm::mat4 transform(1.0);
 
 Texture* grassTexture = nullptr;
 Texture* landTexture = nullptr;
 Texture* noiseTexture = nullptr;
+
+float angle = 0.0f;
+void doRotattion() {
+	angle += 0.2f;
+	transform = glm::rotate(glm::mat4(1.0f), glm::radians(angle), glm::vec3(0.0f, 0.0f, 1.0f));
+}
+
+void preTransform() {
+	transform = glm::translate(transform, glm::vec3(0.5f, 0.0f, 0.0f));
+}
+
+void doTransform() {
+	//float angle = 1.0f;
+	//transform = glm::identity<glm::mat4>();
+	//transform = glm::rotate(transform, glm::radians(angle), glm::vec3(0.0f, 0.0f, 1.0f));  
+
+	float angle = 1.0f;
+	transform = glm::rotate(transform, glm::radians(angle), glm::vec3(0.0f, 0.0f, 1.0f));
+}
+
+void doTranslationTransform() {
+	transform = glm::translate(glm::mat4(1.0f), glm::vec3(0.5f, 0.0f, 0.0f));
+}
+
+void doScaleTransform() {
+	transform = glm::scale(glm::mat4(1.0f), glm::vec3(0.5f, 0.5f, 1.0f));
+}
 
 void prepareInterleavedBuffer() {
 	float vertices[] = {
@@ -171,8 +199,9 @@ void render() {
 	//shader->setInt("noiseSampler", 2);
 
 	shader->setInt("Sampler", 0);
-	shader->setFloat("width",texture->getWidth());
+	shader->setFloat("width", texture->getWidth());
 	shader->setFloat("height", texture->getHeight());
+	shader->setMatrix("transform", transform);
 
 	glBindVertexArray(vao_triangle);
 	glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_INT, 0);
@@ -186,6 +215,16 @@ void render() {
 }
 
 int main(void) {
+	glm::vec2 v0(0);
+	glm::vec3 v1(0);
+	glm::vec4 v2(0);
+
+	glm::vec4 v = v2 + glm::vec4(0);
+
+	glm::mat2x3 mm4(1.0);
+	std::cout << glm::to_string(mm4) << std::endl;
+
+
 	app->init(750, 750);
 
 	//prepareVao_square();
@@ -199,7 +238,12 @@ int main(void) {
 	glViewport(0, 0, app->getWindowWidth(), app->getWindowHeight());
 	glClearColor(0.5f, 0.5f, 0.5f, 1.0f);
 
+	//doTransform();
+	//doTranslationTransform();
+	//doScaleTransform(); 
+	preTransform();
 	while (app->update()) {
+		doTransform();
 		render();
 	}
 
