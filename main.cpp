@@ -1,16 +1,19 @@
-#pragma comment(linker, "/subsystem:\"windows\" /entry:\"mainCRTStartup\"")
+//#pragma comment(linker, "/subsystem:\"windows\" /entry:\"mainCRTStartup\"")
 #include<iostream>
 #include"glframework/core.h"
 #include"glframework/shader.h"
 #include<assert.h>
 #include"wrapper/checkError.h"
-#include"application/application.h"
+#include"application/Application.h"
 #include"glframework/texture.h"
 
 GLuint vao_triangle, vao_square;
 Shader* shader = nullptr;
 Texture* texture = nullptr;
 glm::mat4 transform(1.0);
+glm::mat4 viewMatrix(1.0f);
+glm::mat4 orthoMatrix(1.0f);
+glm::mat4 perspectiveMatrix(1.0f);
 
 Texture* grassTexture = nullptr;
 Texture* landTexture = nullptr;
@@ -60,10 +63,15 @@ void prepareInterleavedBuffer() {
 }
 
 void prepareVAO() {
+	//float positions[] = {
+	//	-0.5f, -0.5f, 0.0f,
+	//	 0.5f, -0.5f, 0.0f,
+	//	 0.0f,  0.5f, 0.0f
+	//};
 	float positions[] = {
-		-0.5f, -0.5f, 0.0f,
-		 0.5f, -0.5f, 0.0f,
-		 0.0f,  0.5f, 0.0f
+		-1.0f, 0.0f, 0.0f,
+		 1.0f, 0.0f, 0.0f,
+		 0.0f,  1.0f, 0.0f
 	};
 
 	float colors[] = {
@@ -75,7 +83,7 @@ void prepareVAO() {
 	unsigned int indices[] = {
 		0, 1, 2
 	};
-
+	 
 	float uvs[] = {
 		0.0f, 0.0f,
 		1.0f, 0.0f,
@@ -188,6 +196,14 @@ void prepareTexture_square() {
 	noiseTexture = new Texture("./assets/textures/noise.png", 2);
 }
 
+void prepareCamera() {
+	viewMatrix = glm::lookAt(glm::vec3(0.0f, 0.0f, 1.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+}
+
+void prepareOrtho() {
+	orthoMatrix = glm::ortho(-2.0f,2.0f,-2.0f,2.0f,2.0f,-2.0f);
+}
+
 void render() {
 	GL_CALL(glClear(GL_COLOR_BUFFER_BIT));
 
@@ -201,7 +217,9 @@ void render() {
 	shader->setInt("Sampler", 0);
 	shader->setFloat("width", texture->getWidth());
 	shader->setFloat("height", texture->getHeight());
-	shader->setMatrix("transform", transform);
+	shader->setMatrix4x4("transform", transform);
+	shader->setMatrix4x4("viewMatrix", viewMatrix);
+	shader->setMatrix4x4("projectionMatrix", orthoMatrix);
 
 	glBindVertexArray(vao_triangle);
 	glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_INT, 0);
@@ -234,6 +252,8 @@ int main(void) {
 	prepareVAO();
 	prepareShader();
 	prepareTexture();
+	prepareCamera();
+	prepareOrtho();
 
 	glViewport(0, 0, app->getWindowWidth(), app->getWindowHeight());
 	glClearColor(0.5f, 0.5f, 0.5f, 1.0f);
@@ -241,9 +261,9 @@ int main(void) {
 	//doTransform();
 	//doTranslationTransform();
 	//doScaleTransform(); 
-	preTransform();
+	//preTransform();
 	while (app->update()) {
-		doTransform();
+		//doTransform();
 		render();
 	}
 

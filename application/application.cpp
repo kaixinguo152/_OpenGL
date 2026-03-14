@@ -1,4 +1,4 @@
-#include"application.h"
+#include"Application.h"
 
 Application* Application::mInstance = nullptr;
 Application* Application::getInstance() {
@@ -42,6 +42,13 @@ bool Application::update() {
 	}
 	glfwPollEvents();
 	glfwSwapBuffers(mWindow);
+
+	glfwSetWindowUserPointer(mWindow, this);
+
+	//鼠标点击时间响应
+	glfwSetMouseButtonCallback(mWindow, mouseCallback);
+	//鼠标移动事件响应
+	glfwSetCursorPosCallback(mWindow, cursorCallback);
 	return true;
 }
 
@@ -49,3 +56,16 @@ void Application::destroy() {
 	glfwDestroyWindow(mWindow);
 	glfwTerminate();
 }
+
+void Application::mouseCallback(GLFWwindow* window, int button, int action, int mods) {
+	Application* self = Application::getInstance();
+	if (self->mouseCallback != nullptr) {
+		self->mMouseCallback(button, action, mods);
+	}
+};
+void Application::cursorCallback(GLFWwindow* window, double xpos, double ypos) {
+	Application* self = Application::getInstance();
+	if (self->cursorCallback != nullptr) {
+		self->mCursorCallback(xpos, ypos);
+	}
+};

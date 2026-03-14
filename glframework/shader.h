@@ -16,7 +16,7 @@ public:
 
 	void setInt(const std::string& name, int value) const;
 
-	void setMatrix(const std::string& name, const glm::mat4& matrix) const;
+	void setMatrix4x4(const std::string& name, const glm::mat4& matrix) const;
 
 private:
 	void checkCompileErrors(GLuint target, std::string type);

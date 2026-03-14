@@ -10,6 +10,8 @@ out vec3 color;
 out vec2 uv;
 
 uniform mat4 transform;
+uniform mat4 viewMatrix;
+uniform mat4 projectionMatrix;
 
 void main(){
 	float dx = 0.3;
@@ -18,7 +20,7 @@ void main(){
 	float scale = 1.0/time;
 
 	vec4 position = vec4(aPos,1.0);
-	position = transform * position;
+	position = projectionMatrix * viewMatrix * transform * position;
 	//gl_Position = vec4((aPos.x + offsetX)*scale,aPos.y*scale,aPos.z*scale,1.0);
 	gl_Position = vec4(position);
 	color = aColor;
